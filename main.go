@@ -18,11 +18,17 @@ import (
 type BadgeType string
 
 const (
+	TypeDeveloper = "developer"
+	TypeSupport   = "support"
+
 	BadgeGitStar    BadgeType = "git_star"
 	BadgeStoryPoint BadgeType = "story_point"
 	BadgeProbation  BadgeType = "probation"
 	BadgeNoVacation BadgeType = "no_vacation"
 	BadgeReviewer   BadgeType = "reviewer"
+	// новые бейджи
+	BadgeTopSpeed    BadgeType = "top_speed"
+	BadgeTopAnswerer BadgeType = "top_answerer"
 )
 
 type User struct {
@@ -31,6 +37,11 @@ type User struct {
 	CountReview    int
 	StartWorkAt    time.Time
 	LastVocationAt time.Time
+
+	MaxSpeed       int
+	CountAnswering int
+
+	Type string
 }
 
 func (u *User) HasBadge(badge BadgeType) bool {
@@ -45,12 +56,20 @@ func (u *User) HasBadge(badge BadgeType) bool {
 		return u.HasBadgeNoVacation()
 	case BadgeReviewer:
 		return u.HasBadgeReviewer()
+	case BadgeTopSpeed:
+		return u.HasBadgeTopSpeed()
+	case BadgeTopAnswerer:
+		return u.HasBadgeTopAnswerer()
 	default:
 		return false
 	}
 }
 
 func (u *User) HasBadgeGitStar() bool {
+	if u.Type != TypeDeveloper {
+		return false
+	}
+
 	if u.CommitCount > 100 && u.HasBadgeReviewer() {
 		return true
 	}
@@ -59,6 +78,10 @@ func (u *User) HasBadgeGitStar() bool {
 }
 
 func (u *User) HasBadgeStoryPoint() bool {
+	if u.Type != TypeDeveloper {
+		return false
+	}
+
 	if u.TaskInDone > 10 {
 		return true
 	}
@@ -82,7 +105,35 @@ func (u *User) HasBadgeNoVacation() bool {
 	return false
 }
 
+func (u *User) HasBadgeTopSpeed() bool {
+	if u.Type != TypeSupport {
+		return false
+	}
+
+	if u.MaxSpeed > 100 {
+		return true
+	}
+
+	return false
+}
+
+func (u *User) HasBadgeTopAnswerer() bool {
+	if u.Type != TypeSupport {
+		return false
+	}
+
+	if u.CountAnswering > 300 {
+		return true
+	}
+
+	return false
+}
+
 func (u *User) HasBadgeReviewer() bool {
+	if u.Type != TypeDeveloper {
+		return false
+	}
+
 	if u.CountReview > 20 {
 		return true
 	}
@@ -98,6 +149,7 @@ func main() {
 		CountReview:    24,
 		StartWorkAt:    time.Now(),
 		LastVocationAt: time.Now(),
+		Type:           TypeDeveloper,
 	}
 
 	badges := []BadgeType{
@@ -110,5 +162,17 @@ func main() {
 
 	for _, badge := range badges {
 		fmt.Println(user.HasBadge(badge))
+	}
+
+	support := &User{
+		MaxSpeed:       1,
+		CountAnswering: 1000,
+		StartWorkAt:    time.Now(),
+		LastVocationAt: time.Now(),
+		Type:           TypeSupport,
+	}
+
+	for _, badge := range badges {
+		fmt.Println(support.HasBadge(badge))
 	}
 }
